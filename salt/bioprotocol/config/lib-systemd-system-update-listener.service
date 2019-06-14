@@ -1,0 +1,23 @@
+[Unit]
+Description="bioprotocol article update listener"
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=bioprotocol
+
+Restart=on-failure
+Environment="LANG=en_US.UTF-8"
+User={{ pillar.elife.deploy_user.username }}
+WorkingDirectory=/srv/bioprotocol
+
+{% if pillar.elife.newrelic.enabled %}
+Environment="NEW_RELIC_CONFIG_FILE=/srv/bioprotocol/newrelic.ini"
+ExecStart=/srv/bioprotocol/venv/bin/newrelic-admin run-program /srv/bioprotocol/venv/bin/python src/manage.py update_listener
+{% else %}
+ExecStart=/srv/bioprotocol/venv/bin/python src/manage.py update_listener
+{% endif %}

@@ -79,12 +79,16 @@ app-uwsgi-conf:
 uwsgi-bioprotocol.socket:
     service.running:
         - enable: True
+        - require:
+            - uwsgi-services # builder-base-formula/elife/uwsgi.sls
 
 app-uwsgi:
     service.running:
         - name: uwsgi-bioprotocol
         - enable: True
         - require:
+            - uwsgi-services
+            # socket should be available before service starts
             - uwsgi-bioprotocol.socket
             - app-uwsgi-conf
             - app-nginx-conf

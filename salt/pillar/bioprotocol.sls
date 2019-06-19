@@ -7,6 +7,8 @@ bioprotocol:
     app:
         secret: not-a-real-secret-key
 
+    api_whitelist: []
+
 elife:
     db:
         app:

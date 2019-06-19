@@ -16,6 +16,11 @@ elife:
             # username: 
             # password: 
 
+    web_users:
+        bioprotocol-:
+            username: these-are-not-the-credentials
+            password: you-are-looking-for
+
     uwsgi:
         services:
             bioprotocol:

@@ -48,7 +48,11 @@ configure bioprotocol:
             - cfg file
             - psql-app-db # builder-base-formula/salt/elife/postgresql-appdb.sls
 
-
+bioprotocol backups:
+    file.managed:
+        - name: /etc/ubr/bioprotocol-backup.yaml
+        - source: salt://bioprotocol/config/etc-ubr-bioprotocol-backup.yaml
+        - template: jinja
 
 
 # nginx+uwsgi config

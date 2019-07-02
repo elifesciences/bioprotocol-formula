@@ -41,8 +41,7 @@ configure bioprotocol:
     cmd.run:
         - user: {{ pillar.elife.deploy_user.username }}
         - cwd: /srv/bioprotocol/
-        - name: |
-            ./install.sh
+        - name: ./install.sh
         - require:
             - reinstall venv on changes
             - cfg file

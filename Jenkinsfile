@@ -1,1 +1,1 @@
-elifeFormula('bioprotocol')
+elifeFormula('bioprotocol', '/srv/bioprotocol')

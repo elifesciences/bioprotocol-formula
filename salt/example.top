@@ -2,7 +2,7 @@ base:
     '*':
         - elife
         - elife.nginx
-        - elife.postgresql
+        - elife.postgresql-11
         - elife.postgresql-appdb
         - elife.uwsgi
         - bioprotocol

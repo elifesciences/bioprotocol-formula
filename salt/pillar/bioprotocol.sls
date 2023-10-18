@@ -21,8 +21,12 @@ elife:
             username: these-are-not-the-credentials
             password: you-are-looking-for
 
+    webserver: 
+        app: caddy
+
     uwsgi:
         services:
             bioprotocol:
                 folder: /srv/bioprotocol
+                protocol: http-socket
 

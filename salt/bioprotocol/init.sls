@@ -76,6 +76,7 @@ app-caddy-conf:
     file.managed:
         - name: /etc/caddy/sites.d/bioprotocol
         - source: salt://bioprotocol/config/etc-caddy-sites.d-bioprotocol
+        - template: jinja
         - require_in:
             - caddy-validate-config
             - app-uwsgi

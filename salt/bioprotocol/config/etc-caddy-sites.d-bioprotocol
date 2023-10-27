@@ -1,3 +1,17 @@
+{% if pillar.elife.env == "dev" %}
 http://localhost:80 {
+{% else %}
+https://caddytest--bp.elifesciences.org {
+    tls /etc/certificates/certificate.chained.crt /etc/certificates/privkey.pem
+{% endif %}
     reverse_proxy unix//var/run/uwsgi/bioprotocol.socket
+
+    log to-stderr {
+        level ERROR
+    }
+
+    log to-file {
+        output file /var/log/caddy/bioprotocol.log
+        format json
+    }
 }

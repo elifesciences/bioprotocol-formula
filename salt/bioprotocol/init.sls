@@ -128,8 +128,21 @@ app-uwsgi:
             - service: caddy-server-service
         {% endif %}
 
+smoke-tests:
+    file.managed:
+        - name: /srv/bioprotocol/smoke-tests.sh
+        - source: salt://bioprotocol/config/srv-bioprotocol-smoke-tests.sh
+        - user: {{ pillar.elife.deploy_user.username }}
+        - mode: 754
+        - template: jinja
 
-
+    cmd.run:
+        - runas: {{ pillar.elife.deploy_user.username }}
+        - cwd: /srv/bioprotocol/
+        - name: ./smoke-tests.sh
+        - require:
+            - file: smoke-tests
+            - app-uwsgi
 
 #
 # article update listener

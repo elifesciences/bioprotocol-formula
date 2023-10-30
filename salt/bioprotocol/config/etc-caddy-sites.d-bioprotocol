@@ -1,3 +1,4 @@
+{% set whitelist = pillar.bioprotocol.get('api_whitelist', []) %}
 {% set h1 = salt['elife.cfg']('project.project_hostname') %}{# bp.elifesciences.org -#}
 {% set h2 = salt['elife.cfg']('project.full_hostname') %}{# prod--bp.elifesciences.org -#}
 {% set h3 = salt['elife.cfg']('project.int_project_hostname') %}{# bp.elife.internal -#}
@@ -8,7 +9,41 @@
 {% else -%}
 http://localhost:80 http://127.0.0.1:80 {
 {% endif %}
-    reverse_proxy unix//var/run/uwsgi/bioprotocol.socket
+    {% if whitelist %}
+    # if a whitelist of addresses has been defined, deny any requests not matching them.
+    @blocked {
+        not remote_ip {% for cidr in whitelist %}{{ cidr }} {% endfor %}
+    }
+    respond @blocked 403 {
+        close
+    }
+    {% endif %}
+
+    # all methods except GET and HEAD are denied unless allowed using BASICAUTH
+    @requires_auth {
+        not method GET HEAD
+    }
+    basicauth @requires_auth {
+        # TODO: can this fail 'open'? we can't have that. test
+        {% for _, user in pillar.elife.web_users.items() -%}
+        {% if user.get("caddy_password_hash") -%}
+        {{ user.username }} {{ user.caddy_password_hash }}
+        {% endif -%}
+        {% endfor %}
+    }
+
+    request_body method POST {
+        max_size 5MB
+    }
+
+    reverse_proxy unix//var/run/uwsgi/bioprotocol.socket {
+        transport http {
+            # drop connection after this many seconds.
+            # WARNING: this value *must* be higher than uwsgi's 'harakiri' value (10s): /srv/$app/uwsgi.ini
+            read_timeout 15s # drop connection after 15s if nothing read from reverse proxy.
+        }
+    }
+
     log {
         output file /var/log/caddy/access.log {
             # see /etc/logrotate.d/caddy

@@ -1,14 +1,21 @@
 {% set whitelist = pillar.bioprotocol.get('api_whitelist', []) %}
+
+(certs) {
+    tls /etc/certificates/certificate.chained.crt /etc/certificates/privkey.pem
+}
+
 {% set h1 = salt['elife.cfg']('project.project_hostname') %}{# bp.elifesciences.org -#}
 {% set h2 = salt['elife.cfg']('project.full_hostname') %}{# prod--bp.elifesciences.org -#}
 {% set h3 = salt['elife.cfg']('project.int_project_hostname') %}{# bp.elife.internal -#}
 {% set h4 = salt['elife.cfg']('project.int_full_hostname') %}{# prod--bp.elife.internal -#}
 {% if salt['elife.cfg']('cfn.outputs.DomainName') -%}
-{% if h1 %}{{ h1 }} {% endif %}{% if h2 %}{{ h2 }} {% endif %}{% if h3 %}{{ h3 }} {% endif %}{% if h4 %}{{ h4 }} {% endif %} {
-    tls /etc/certificates/certificate.chained.crt /etc/certificates/privkey.pem
+{% if h1 %}https://{{ h1 }} {% endif %}{% if h2 %}https://{{ h2 }} {% endif %}{% if h3 %}http://{{ h3 }} {% endif %}{% if h4 %}http://{{ h4 }} {% endif %}{
 {% else -%}
-http://localhost:80 http://127.0.0.1:80 {
+http://localhost http://127.0.0.1 {
 {% endif %}
+
+    {% if salt['elife.cfg']('cfn.outputs.DomainName') -%}import certs{% endif %}
+
     {% if whitelist %}
     # if a whitelist of addresses has been defined, deny any requests not matching them.
     @blocked {

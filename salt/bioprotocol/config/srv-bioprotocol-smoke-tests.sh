@@ -20,7 +20,7 @@ function post {
 # ensure no unauthenticated requests can POST
 test $(post "nouser" "nopass") = 401
 
-# ensure every configured user can POST
+# ensure all configured web users can POST
 {% for _, user in pillar.elife.web_users.items() -%}
 test $(post "{{ user.username }}" "{{ user.password }}") = 400 # authenticated, but bad request (bad data)
 {% endfor %}

@@ -1,25 +1,12 @@
-{% set whitelist = pillar.bioprotocol.get('api_whitelist', []) %}
-
 (certs) {
     tls /etc/certificates/certificate.chained.crt /etc/certificates/privkey.pem
 }
 
-{% set h1 = salt['elife.cfg']('project.project_hostname') %}{# bp.elifesciences.org -#}
-{% set h2 = salt['elife.cfg']('project.full_hostname') %}{# prod--bp.elifesciences.org -#}
-{% set h3 = salt['elife.cfg']('project.int_project_hostname') %}{# bp.elife.internal -#}
-{% set h4 = salt['elife.cfg']('project.int_full_hostname') %}{# prod--bp.elife.internal -#}
-{% if salt['elife.cfg']('cfn.outputs.DomainName') -%}
-{% if h1 %}https://{{ h1 }} {% endif %}{% if h2 %}https://{{ h2 }} {% endif %}{% if h3 %}http://{{ h3 }} {% endif %}{% if h4 %}http://{{ h4 }} {% endif %}{
-{% else -%}
-http://localhost http://127.0.0.1 {
-{% endif %}
-
-    {% if salt['elife.cfg']('cfn.outputs.DomainName') -%}import certs{% endif %}
-
-    {% if whitelist %}
-    # if a whitelist of addresses has been defined, deny any requests not matching them.
+(config) {
+    {% if pillar.bioprotocol.get('api_whitelist', []) %}
+    # deny requests from IPs not matching a CIDR in whitelist.
     @blocked {
-        not remote_ip {% for cidr in whitelist %}{{ cidr }} {% endfor %}
+        not remote_ip {% for cidr in pillar.bioprotocol.get('api_whitelist', []) %}{{ cidr }} {% endfor %}
     }
     respond @blocked 403 {
         close
@@ -61,3 +48,18 @@ http://localhost http://127.0.0.1 {
         }
     }
 }
+
+http://localhost http://127.0.0.1 {
+    import config
+}
+
+{% if salt['elife.cfg']('cfn.outputs.DomainName') -%}
+{% set h1 = salt['elife.cfg']('project.project_hostname') %}{# bp.elifesciences.org -#}
+{% set h2 = salt['elife.cfg']('project.full_hostname') %}{# prod--bp.elifesciences.org -#}
+{% set h3 = salt['elife.cfg']('project.int_project_hostname') %}{# bp.elife.internal -#}
+{% set h4 = salt['elife.cfg']('project.int_full_hostname') %}{# prod--bp.elife.internal -#}
+{% if h1 %}https://{{ h1 }} {% endif %}{% if h2 %}https://{{ h2 }} {% endif %}{% if h3 %}http://{{ h3 }} {% endif %}{% if h4 %}http://{{ h4 }} {% endif %}{
+    import certs
+    import config
+{% endif %}
+

@@ -1,24 +1,26 @@
+{% set whitelist = pillar.bioprotocol.get('api_whitelist', []) %}
+
 (certs) {
     tls /etc/certificates/certificate.chained.crt /etc/certificates/privkey.pem
 }
 
 (config) {
-    {% if pillar.bioprotocol.get('api_whitelist', []) %}
-    # deny requests from IPs not matching a CIDR in whitelist.
-    @blocked {
-        not remote_ip {% for cidr in pillar.bioprotocol.get('api_whitelist', []) %}{{ cidr }} {% endfor %}
+    {% if whitelist %}
+    # only those in whitelist can POST
+    @not_authorised_to_POST {
+        not method GET HEAD
+        not remote_ip {% for cidr in whitelist %}{{ cidr }} {% endfor %}
     }
-    respond @blocked 403 {
+    respond @not_authorised_to_POST 403 {
         close
     }
     {% endif %}
 
-    # all methods except GET and HEAD are denied unless allowed using BASICAUTH
-    @requires_auth {
+    # auth required to POST
+    @on_POST {
         not method GET HEAD
     }
-    basicauth @requires_auth {
-        # TODO: can this fail 'open'? we can't have that. test
+    basicauth @on_POST {
         {% for _, user in pillar.elife.web_users.items() -%}
         {% if user.get("caddy_password_hash") -%}
         {{ user.username }} {{ user.caddy_password_hash }}

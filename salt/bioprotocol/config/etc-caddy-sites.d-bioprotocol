@@ -49,17 +49,19 @@
     }
 }
 
-http://localhost http://127.0.0.1 {
-    import config
-}
-
-{% if salt['elife.cfg']('cfn.outputs.DomainName') -%}
 {% set h1 = salt['elife.cfg']('project.project_hostname') %}{# bp.elifesciences.org -#}
 {% set h2 = salt['elife.cfg']('project.full_hostname') %}{# prod--bp.elifesciences.org -#}
 {% set h3 = salt['elife.cfg']('project.int_project_hostname') %}{# bp.elife.internal -#}
 {% set h4 = salt['elife.cfg']('project.int_full_hostname') %}{# prod--bp.elife.internal -#}
-{% if h1 %}https://{{ h1 }} {% endif %}{% if h2 %}https://{{ h2 }} {% endif %}{% if h3 %}http://{{ h3 }} {% endif %}{% if h4 %}http://{{ h4 }} {% endif %}{
+
+http://localhost http://127.0.0.1 {% if h3 %}http://{{ h3 }} {% endif %}{% if h4 %}http://{{ h4 }} {% endif %}{
+    import config
+}
+
+{% if salt['elife.cfg']('cfn.outputs.DomainName') -%}
+{% if h1 %}https://{{ h1 }} {% endif %}{% if h2 %}https://{{ h2 }} {% endif %}{
     import certs
     import config
+}
 {% endif %}
 

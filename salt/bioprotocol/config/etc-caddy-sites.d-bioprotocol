@@ -1,0 +1,69 @@
+{% set whitelist = pillar.bioprotocol.get('api_whitelist', []) %}
+
+(certs) {
+    tls /etc/certificates/certificate.chained.crt /etc/certificates/privkey.pem
+}
+
+(config) {
+    {% if whitelist %}
+    # only those in whitelist can POST
+    @not_authorised_to_POST {
+        not method GET HEAD
+        not remote_ip {% for cidr in whitelist %}{{ cidr }} {% endfor %}
+    }
+    respond @not_authorised_to_POST 403 {
+        close
+    }
+    {% endif %}
+
+    # auth required to POST
+    @on_POST {
+        not method GET HEAD
+    }
+    basicauth @on_POST {
+        {% for _, user in pillar.elife.web_users.items() -%}
+        {% if user.get("caddy_password_hash") -%}
+        {{ user.username }} {{ user.caddy_password_hash }}
+        {% endif -%}
+        {% endfor %}
+    }
+
+    request_body method POST {
+        max_size 5MB
+    }
+
+    reverse_proxy unix//var/run/uwsgi/bioprotocol.socket {
+        transport http {
+            # drop connection after this many seconds.
+            # WARNING: this value *must* be higher than uwsgi's 'harakiri' value (10s): /srv/$app/uwsgi.ini
+            read_timeout 15s # drop connection after 15s if nothing read from reverse proxy.
+        }
+    }
+
+    log {
+        output file /var/log/caddy/access.log {
+            # see /etc/logrotate.d/caddy
+            roll_disabled
+        }
+        format json {
+            time_format rfc3339
+        }
+    }
+}
+
+{% set h1 = salt['elife.cfg']('project.project_hostname') %}{# bp.elifesciences.org -#}
+{% set h2 = salt['elife.cfg']('project.full_hostname') %}{# prod--bp.elifesciences.org -#}
+{% set h3 = salt['elife.cfg']('project.int_project_hostname') %}{# bp.elife.internal -#}
+{% set h4 = salt['elife.cfg']('project.int_full_hostname') %}{# prod--bp.elife.internal -#}
+
+http://localhost http://127.0.0.1 {% if h3 %}http://{{ h3 }} {% endif %}{% if h4 %}http://{{ h4 }} {% endif %}{
+    import config
+}
+
+{% if salt['elife.cfg']('cfn.outputs.DomainName') -%}
+{% if h1 %}https://{{ h1 }} {% endif %}{% if h2 %}https://{{ h2 }} {% endif %}{
+    import certs
+    import config
+}
+{% endif %}
+

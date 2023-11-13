@@ -53,9 +53,7 @@ bioprotocol backups:
         - source: salt://bioprotocol/config/etc-ubr-bioprotocol-backup.yaml
         - template: jinja
 
-
-# nginx+uwsgi config
-
+{% if pillar.elife.webserver.app == "nginx" %}
 app-nginx-conf:
     file.managed:
         - name: /etc/nginx/sites-enabled/bioprotocol.conf
@@ -63,12 +61,29 @@ app-nginx-conf:
         - source: salt://bioprotocol/config/etc-nginx-sites-enabled-bioprotocol.conf
         - require:
             - pkg: nginx-server
-{% if salt['elife.cfg']('cfn.outputs.DomainName') %}
+        {% if salt['elife.cfg']('cfn.outputs.DomainName') %}
             - cmd: web-ssl-enabled
-{% endif %}
+        {% endif %}
+        - require_in:
+            - app-uwsgi
         - watch_in:
-            # restart nginx if app config changes
+            # restart nginx if site config changes
             - service: nginx-server-service
+{% endif %}
+
+{% if pillar.elife.webserver.app == "caddy" %}
+app-caddy-conf:
+    file.managed:
+        - name: /etc/caddy/sites.d/bioprotocol
+        - source: salt://bioprotocol/config/etc-caddy-sites.d-bioprotocol
+        - template: jinja
+        - require_in:
+            - caddy-validate-config
+            - app-uwsgi
+        - watch_in:
+            # restart caddy if site config changes
+            - service: caddy-server-service
+{% endif %}
 
 app-uwsgi-conf:
     file.managed:
@@ -83,6 +98,7 @@ uwsgi-bioprotocol.socket:
     service.running:
         - enable: True
         - require:
+            - webserver-user-group # builder-base-formula/elife/nginx.sls or caddy.sls
             - uwsgi-services # builder-base-formula/elife/uwsgi.sls
 
 app-uwsgi:
@@ -94,7 +110,6 @@ app-uwsgi:
             # socket should be available before service starts
             - uwsgi-bioprotocol.socket
             - app-uwsgi-conf
-            - app-nginx-conf
             - configure bioprotocol
         - watch:
             # restart uwsgi if bioprotocol code changes
@@ -103,12 +118,31 @@ app-uwsgi:
             - cfg file
             # restart uwsgi if app's uwsgi conf changes
             - app-uwsgi-conf
-        # restart nginx if uwsgi restarts
+        {% if pillar.elife.webserver.app == "nginx" %}
         - watch_in:
             - service: nginx-server-service
+        {% endif %}
 
+        {% if pillar.elife.webserver.app == "caddy" %}
+        - watch_in:
+            - service: caddy-server-service
+        {% endif %}
 
+smoke-tests:
+    file.managed:
+        - name: /srv/bioprotocol/smoke-tests.sh
+        - source: salt://bioprotocol/config/srv-bioprotocol-smoke-tests.sh
+        - user: {{ pillar.elife.deploy_user.username }}
+        - mode: 754
+        - template: jinja
 
+    cmd.run:
+        - runas: {{ pillar.elife.deploy_user.username }}
+        - cwd: /srv/bioprotocol/
+        - name: ./smoke-tests.sh
+        - require:
+            - file: smoke-tests
+            - app-uwsgi
 
 #
 # article update listener

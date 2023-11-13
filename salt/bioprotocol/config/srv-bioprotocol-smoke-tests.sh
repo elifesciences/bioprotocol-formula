@@ -1,3 +1,4 @@
+#!/bin/bash
 set -ex
 
 test $(curl -s "http://127.0.0.1/ping" --output /dev/null --write-out '%{http_code}') = 200

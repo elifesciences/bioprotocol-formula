@@ -65,7 +65,7 @@ app-nginx-conf:
             - cmd: web-ssl-enabled
         {% endif %}
         - require_in:
-            - app-uwsgi
+            - service: app-uwsgi
         - watch_in:
             # restart nginx if site config changes
             - service: nginx-server-service
@@ -78,8 +78,8 @@ app-caddy-conf:
         - source: salt://bioprotocol/config/etc-caddy-sites.d-bioprotocol
         - template: jinja
         - require_in:
-            - caddy-validate-config
-            - app-uwsgi
+            - cmd: caddy-validate-config
+            - service: app-uwsgi
         - watch_in:
             # restart caddy if site config changes
             - service: caddy-server-service

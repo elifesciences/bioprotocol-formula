@@ -9,12 +9,14 @@ bioprotocol:
 
     api_whitelist: []
 
+    api_url: https://api.prod.elifesciences.org
+
 elife:
     db:
         app:
             name: bioprotocol
-            # username: 
-            # password: 
+            # username:
+            # password:
 
     web_users:
         bioprotocol-:
@@ -23,7 +25,7 @@ elife:
             # created with `caddy hash-password`
             caddy_password_hash: "$2a$14$1um/p1.PfidsBf8JDofTmutenPgnu/x29WBG/eHjt.FwmuKk7DGt2"
 
-    webserver: 
+    webserver:
         app: caddy
 
     uwsgi:
@@ -31,4 +33,3 @@ elife:
             bioprotocol:
                 folder: /srv/bioprotocol
                 protocol: http-socket
-

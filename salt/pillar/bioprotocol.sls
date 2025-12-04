@@ -28,6 +28,9 @@ elife:
     webserver:
         app: caddy
 
+    caddy:
+        version: 2.10.2
+
     uwsgi:
         services:
             bioprotocol:

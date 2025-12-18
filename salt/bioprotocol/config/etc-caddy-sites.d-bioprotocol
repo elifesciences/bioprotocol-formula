@@ -51,11 +51,13 @@
 
 http://localhost http://127.0.0.1 {% if h3 %}http://{{ h3 }} {% endif %}{% if h4 %}http://{{ h4 }} {% endif %}{
     import config
+    import ../snippets/cve_2025_64459_mitigation
 }
 
 {% if salt['elife.cfg']('cfn.outputs.DomainName') -%}
 {% if h1 %}https://{{ h1 }} {% endif %}{% if h2 %}https://{{ h2 }} {% endif %}{
     import ../snippets/certs
     import config
+    import ../snippets/cve_2025_64459_mitigation
 }
 {% endif %}
